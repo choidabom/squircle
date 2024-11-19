@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rounded Rectangle vs Squircle</title>
+    <style>
+        body {
+            background-color: #222;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            gap: 40px;
+            text-align: center;
+        }
+
+        .shape-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        svg {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 10px;
+        }
+
+        .rounded {
+            fill: #00a8e8;
+        }
+
+        .squircle {
+            fill: #b84f82;
+            opacity: 0.9;
+        }
+
+        .overlay {
+            fill: none;
+            stroke: #00a8e8;
+            stroke-width: 2;
+        }
+
+        .label {
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="shape-container">
+            <svg id="rounded-rect"></svg>
+            <div class="label">Rounded Rectangle</div>
+        </div>
+
+        <div class="shape-container">
+            <svg id="squircle"></svg>
+            <div class="label">Squircle</div>
+        </div>
+
+        <div class="shape-container">
+            <svg id="overlay"></svg>
+            <div class="label">Overlay</div>
+        </div>
+    </div>
+
+    <script>
+        // Utility function to create SVG elements
+        function createSVGTag(tag) {
+            return document.createElementNS("http://www.w3.org/2000/svg", tag);
+        }
+
+        // Generate Rounded Rectangle Path
+        function getRoundedRectanglePath(width, height, radius) {
+            return `
+                M ${radius},0
+                H ${width - radius}
+                A ${radius},${radius} 0 0 1 ${width},${radius}
+                V ${height - radius}
+                A ${radius},${radius} 0 0 1 ${width - radius},${height}
+                H ${radius}
+                A ${radius},${radius} 0 0 1 0,${height - radius}
+                V ${radius}
+                A ${radius},${radius} 0 0 1 ${radius},0
+                Z
+            `;
+        }
+
+        // Generate Squircle Path
+        function getSquirclePath(width, height, n = 4, resolution = 50) {
+            const halfWidth = width / 2;
+            const halfHeight = height / 2;
+            const points = [];
+
+            for (let t = 0; t <= resolution; t++) {
+                const theta = (Math.PI / 2) * (t / resolution);
+                const x = halfWidth * Math.sign(Math.cos(theta)) * Math.pow(Math.abs(Math.cos(theta)), 2 / n);
+                const y = halfHeight * Math.sign(Math.sin(theta)) * Math.pow(Math.abs(Math.sin(theta)), 2 / n);
+                points.push({ x, y });
+            }
+
+            const mirroredPoints = [
+                ...points,
+                ...points.map(p => ({ x: -p.x, y: p.y })).reverse(),
+                ...points.map(p => ({ x: -p.x, y: -p.y })),
+                ...points.map(p => ({ x: p.x, y: -p.y })).reverse(),
+            ];
+
+            return mirroredPoints.map((p, i) => (i === 0 ? `M` : `L`) + `${p.x + 50},${p.y + 50}`).join(" ") + " Z";
+        }
+
+        // Add Rounded Rectangle to SVG
+        const roundedRectSvg = document.getElementById("rounded-rect");
+        roundedRectSvg.setAttribute("viewBox", "0 0 100 100");
+        const roundedRectPath = createSVGTag("path");
+        roundedRectPath.setAttribute("d", getRoundedRectanglePath(100, 100, 20));
+        roundedRectPath.classList.add("rounded");
+        roundedRectSvg.appendChild(roundedRectPath);
+
+        // Add Squircle to SVG
+        const squircleSvg = document.getElementById("squircle");
+        squircleSvg.setAttribute("viewBox", "0 0 100 100");
+        const squirclePath = createSVGTag("path");
+        squirclePath.setAttribute("d", getSquirclePath(100, 100));
+        squirclePath.classList.add("squircle");
+        squircleSvg.appendChild(squirclePath);
+
+        // Add Overlay to SVG
+        const overlaySvg = document.getElementById("overlay");
+        overlaySvg.setAttribute("viewBox", "0 0 100 100");
+        const overlaySquircle = createSVGTag("path");
+        overlaySquircle.setAttribute("d", getSquirclePath(100, 100));
+        overlaySquircle.classList.add("squircle");
+        const overlayRect = createSVGTag("path");
+        overlayRect.setAttribute("d", getRoundedRectanglePath(100, 100, 20));
+        overlayRect.classList.add("overlay");
+        overlaySvg.appendChild(overlaySquircle);
+        overlaySvg.appendChild(overlayRect);
+    </script>
+</body>
+
+</html>
